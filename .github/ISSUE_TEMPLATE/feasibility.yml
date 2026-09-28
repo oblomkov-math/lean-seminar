@@ -1,0 +1,78 @@
+name: Feasibility check
+description: Week 11. The five-item check of your project problem, for the group to read and comment on.
+title: "Feasibility check: "
+labels: ["feasibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Post this early in week 11. First fill in §0–§5 of your project file (your copy of
+        `Seminar/ProjectTemplate.lean`), then paste the parts here.
+
+        A problem that fails an item is a finding, not a failure. Rescope it or choose
+        another problem, with the group's help.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: The problem word for word, with the exam and the year.
+    validations:
+      required: true
+
+  - type: textarea
+    id: statement
+    attributes:
+      label: 1. A statement that typechecks
+      description: >
+        Your Lean `theorem ... := by sorry`. It must compile. If it does not typecheck
+        after a week of work, the problem is out of scope.
+      render: lean
+    validations:
+      required: true
+
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: 2. Prerequisite audit
+      description: >
+        Every mathematical object in the statement, with its Mathlib name. Find names with
+        `exact?`, `#check`, Loogle, LeanSearch or Lean Finder. List the objects that
+        Mathlib does not have: each one needs a new `def` and lemmas about it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: vacuity
+    attributes:
+      label: 3. Vacuity guard
+      description: >
+        An `example` giving an actual object that satisfies all the hypotheses. A theorem
+        whose hypotheses can never hold is valid Lean, but it says nothing.
+      render: lean
+    validations:
+      required: true
+
+  - type: textarea
+    id: junk
+    attributes:
+      label: 4. Junk-value audit
+      description: >
+        Every partial operation in the statement: `/`, subtraction on `ℕ`, `⁻¹`,
+        `Real.log`, `Real.sqrt`, `Polynomial.degree`, an empty sum, `sInf`, and so on.
+        Lean gives these a value even where mathematics leaves them undefined, for
+        example `x / 0 = 0`. For each one, say in a line why your statement still means
+        what you intend there. If there are none, say so.
+    validations:
+      required: true
+
+  - type: textarea
+    id: lemmas
+    attributes:
+      label: 5. Three lemma names
+      description: >
+        At least three Mathlib lemmas that you expect to use in the proof, each with its
+        `#check` output.
+      render: lean
+    validations:
+      required: true

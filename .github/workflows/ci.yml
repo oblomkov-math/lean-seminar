@@ -1,0 +1,35 @@
+name: seminar-ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      # Restores the compiled Mathlib olean cache. Without this the job builds
+      # Mathlib from source and will exceed the runner time limit.
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+
+      # Must pass: the shared repository always compiles.
+      - name: Build
+        run: lake build
+
+      # Feedback, not a gate. Lists every `sorry`, `axiom` and `native_decide`
+      # left in Projects/. If it finds any, this step is marked as failed, but
+      # the job still passes.
+      - name: Completeness report
+        continue-on-error: true
+        run: ./scripts/check.sh Projects

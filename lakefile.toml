@@ -1,0 +1,33 @@
+name = "seminar"
+defaultTargets = ["Seminar", "Exercises", "Projects"]
+
+# The options of Lake's `math` template, minus Mathlib's style linters
+# (`weak.linter.mathlibStandardSet`), which would flag every participant file.
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+# Mathlib is fixed at this commit for the whole semester, so that everyone's
+# files keep compiling against the same library. Do not run `lake update`: it
+# would move Mathlib to a newer version, where lemma names and assumptions
+# differ. (This is Mathlib's master commit of 2026-09-14; its lean-toolchain is
+# v4.34.0, the same as ours.)
+rev = "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa"
+
+# Shared seminar files. The root Seminar.lean imports every file in Seminar/.
+[[lean_lib]]
+name = "Seminar"
+
+# The weekly exercises: every .lean file under Exercises/.
+[[lean_lib]]
+name = "Exercises"
+globs = ["Exercises.+"]
+
+# Participants' projects: every .lean file under Projects/.
+[[lean_lib]]
+name = "Projects"
+globs = ["Projects.+"]

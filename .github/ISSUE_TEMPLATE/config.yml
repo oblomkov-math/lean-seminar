@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions
+    url: https://github.com/oblomkov-math/lean-seminar/discussions
+    about: Ask about Lean, Mathlib, the exercises or your project in Discussions.

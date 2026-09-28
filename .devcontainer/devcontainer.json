@@ -1,0 +1,21 @@
+{
+  "name": "Lean seminar",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "onCreateCommand": "curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none",
+
+  "postCreateCommand": {
+    "mathlib": "~/.elan/bin/lake exe cache get",
+    "python": "command -v python3 >/dev/null || (sudo apt-get update && sudo apt-get install -y python3)"
+  },
+
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/.elan/bin"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["leanprover.lean4"]
+    }
+  }
+}
