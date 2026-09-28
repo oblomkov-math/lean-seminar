@@ -71,14 +71,15 @@ example : IsNoetherianRing ℤ := by infer_instance
 
 /-! ## 3. Axiom auditing
 
-A finished proof should rest on exactly `propext`, `Classical.choice`, and
+A finished proof should rest on at most `propext`, `Classical.choice`, and
 `Quot.sound`. Anything else — above all `sorryAx` — means the proof is not a
 proof. `lake build` only *warns* on `sorry`, so this check is not optional. -/
 
 theorem two_add_two : (2 : ℕ) + 2 = 4 := by norm_num
 
 #print axioms two_add_two
--- expected: 'two_add_two' does not depend on any axioms
+-- prints: 'two_add_two' depends on axioms: [propext]. That is one of the three
+-- standard axioms, so the proof is complete.
 
 #print axioms vacuous
 -- also clean — which is exactly why axiom auditing does not substitute for §2.
