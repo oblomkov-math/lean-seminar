@@ -1,6 +1,7 @@
 import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Linarith
 
+-- five proofs of the same theorem
 theorem thm1 (a b c d e : ℝ) (h1: a < b) (h2: b ≤ c) (h3: c < d) (h4: d ≤ e) : a < e :=
   lt_trans (lt_of_lt_of_le h1 h2) (lt_of_lt_of_le h3 h4)
 
