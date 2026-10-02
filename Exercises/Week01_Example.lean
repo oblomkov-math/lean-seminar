@@ -1,3 +1,4 @@
+/- Author: Owen Bechtel -/
 #check 0
 
 inductive FinSeq (α : Type) : Type where

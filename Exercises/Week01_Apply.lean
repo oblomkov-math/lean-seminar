@@ -1,3 +1,4 @@
+/- Author: Owen Bechtel -/
 import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Linarith
 
