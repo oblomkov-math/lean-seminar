@@ -1,4 +1,5 @@
 import Mathlib.Basic.Real.Basic
+import Mathlib.Tactic.Linarith
 
 theorem thm1 (a b c d e : ℝ) (h1: a < b) (h2: b ≤ c) (h3: c < d) (h4: d ≤ e) : a < e :=
   lt_trans (lt_of_lt_of_le h1 h2) (lt_of_lt_of_le h3 h4)
@@ -20,4 +21,7 @@ theorem thm3 (a b c d e : ℝ) (h1 : a < b) (h2 : b ≤ c) (h3 : c < d) (h4 : d 
     _ ≤ e := h4
 
 theorem thm4 (a b c d e : ℝ) (h1 : a < b) (h2 : b ≤ c) (h3 : c < d) (h4 : d ≤ e) : a < e := by
+  linarith
+
+theorem thm5 (a b c d e : ℝ) (h1 : a < b) (h2 : b ≤ c) (h3 : c < d) (h4 : d ≤ e) : a < e := by
   grind
