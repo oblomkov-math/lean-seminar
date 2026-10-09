@@ -7,6 +7,10 @@ and proves it in Lean, and adds it here in a folder of their own:
 `lake build` builds every `.lean` file in this folder, so you don't need to
 list your files anywhere.
 
+For a finished example, see [`Example/EvenMul.lean`](Example/EvenMul.lean):
+the template filled in for an easy problem, that an even integer times any
+integer is even.
+
 ## How to add your project
 
 1. **Fork this repository, and start a branch for your project.** A fork is
