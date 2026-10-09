@@ -36,6 +36,7 @@ theorem reverse_reverse {α : Type} (u : FinSeq α) : reverse (reverse u) = u :=
   match u with
   | empty => rfl
   | push u0 u' => by
-    change reverse (concat (reverse u') (push u0 empty)) = push u0 u'
+    have unf : reverse (push u0 u') = concat (reverse u') (push u0 empty) := rfl
+    rw [unf]
     rw [last_to_first]
     rw [reverse_reverse]
