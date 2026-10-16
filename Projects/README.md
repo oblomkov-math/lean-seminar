@@ -7,9 +7,15 @@ and proves it in Lean, and adds it here in a folder of their own:
 `lake build` builds every `.lean` file in this folder, so you don't need to
 list your files anywhere.
 
-For a finished example, see [`Example/EvenMul.lean`](Example/EvenMul.lean):
-the template filled in for an easy problem, that an even integer times any
-integer is even.
+Three finished examples, from easiest to hardest:
+
+* [`Example/EvenMul.lean`](Example/EvenMul.lean): the template filled in for an
+  easy problem, that an even integer times any integer is even.
+* [`Example/Lagrange.lean`](Example/Lagrange.lean): Lagrange's theorem, proved
+  from scratch. [`Example/ReadingLagrange.md`](Example/ReadingLagrange.md) walks
+  through it line by line, with what the InfoView shows at each step.
+* [`Example/Sylow.lean`](Example/Sylow.lean): all three Sylow theorems, proved
+  by group actions. A longer proof.
 
 ## How to add your project
 
