@@ -16,6 +16,8 @@ Three finished examples, from easiest to hardest:
   through it line by line, with what the InfoView shows at each step.
 * [`Example/Sylow.lean`](Example/Sylow.lean): all three Sylow theorems, proved
   by group actions. A longer proof.
+  [`Example/ReadingSylow.md`](Example/ReadingSylow.md) walks through it the
+  same way.
 
 ## How to add your project
 
