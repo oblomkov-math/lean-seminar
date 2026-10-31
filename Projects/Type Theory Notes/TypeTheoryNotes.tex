@@ -1,0 +1,651 @@
+\documentclass{article}
+\usepackage{amsmath, amsfonts, amsthm, amssymb, mathtools, mathpartir}
+\usepackage{mathrsfs}
+\usepackage{titlesec}
+\usepackage{lastpage}
+\usepackage{textcomp, gensymb}
+\usepackage{braket}
+\usepackage{url}
+\usepackage{pgffor}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{stmaryrd}
+\usepackage[autostyle]{csquotes}
+\setlist[itemize]{noitemsep}
+\setlist[enumerate]{noitemsep}
+\setlist[description]{noitemsep}
+\titlelabel{\thetitle.\quad}
+
+%%% Geometry/spacing etc
+\usepackage[letterpaper]{geometry} % sets page size
+\usepackage{setspace} % sets spacing
+\usepackage{graphicx} % to insert images
+\usepackage{svg}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+\usepackage{tikz-cd}
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shapes.geometric,fit}
+%%% Hyperref and friends
+\usepackage[bookmarks=true, colorlinks=true, linkcolor=blue, citecolor=red, hypertexnames=false, pdftex]{hyperref}
+\usepackage{titling}
+\usepackage{nopageno}
+\usepackage{cleveref}
+\usepackage{csquotes}
+\usepackage{fancyhdr}
+\fancyhf{}
+\renewcommand{\sectionmark}[1]{\markright{#1}}
+\renewcommand{\subsectionmark}[1]{}
+\newcommand{\AuthorName}{Seth Yoo}
+\lhead{\AuthorName}
+\rhead{\rightmark}
+
+\setlength{\headheight}{15pt}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+\rfoot{\footnotesize Page \thepage\ of \pageref*{LastPage}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{prop}[theorem]{Proposition}
+\theoremstyle{definition}  
+\newtheorem{definition} [theorem] {Definition} 
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark} [theorem] {Remark}
+\newtheorem{addendum}{Addendum}
+
+
+\pagestyle{fancy}
+\setstretch{1.25}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\T}{\mathbb{T}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\1}{\mathbb{1}}
+\newcommand{\0}{\mathbb{0}}
+\newcommand{\bd}{\partial}
+\newcommand{\inj}{\hookrightarrow}
+\newcommand{\surj}{\twoheadrightarrow}
+\newcommand{\cov}{\widetilde}
+\newcommand{\imag}{\text{Im}}
+\newcommand{\hm}{\varphi}
+\newcommand{\tx}{\text}
+\newcommand{\ClassFun}{\mathrm{ClassFun}}
+\newcommand{\Fix}{\mathrm{Fix}}
+\newcommand{\ty}{\mathbf}
+\newcommand{\bb}{\mathbb}
+
+
+\title{Type Theory and Lean}
+\author{Seth Yoo}
+\date{For the Fall 2026 Lean/AI in Math Seminar}
+
+\begin{document}
+
+\maketitle
+
+This is an informal introduction to type theory and its use in Lean4. Given my personal lack of prequisite knowledge around these topics, this text will also assume effectively zero background in both type theory and programming. I will be loosely following \textit{Theorem Proving in Lean4} (\url{https://leanprover.github.io/theorem_proving_in_lean4/}), but I will also be throwing a lot of basic questions into LLMs for assistance in the spirit of the Lean/AI Seminar (although, depending on one's view, this could also be against that spirit!). The LLM input I receive as answers to these questions will be explicitly marked in the text. 
+
+\section{Everything is Types (Chapters 2.1-2.3)}
+
+The title of this section is the first key takeaway that I ended up with after reading through to section 2.4 in our primary reference. Even though this has been stated to me on many occasions, this claim hadn't quite hit home until I realized even things like theorems and statements are themselves types. 
+
+\begin{definition}
+    A \textbf{type} is either a primitive base type or constructed from existing types using type constructors. A \textbf{term} is an element of a type.
+\end{definition}
+
+Without further specification about these primitive types and type constructors, this \enquote{definition} of a type is somewhat useless. There isn't a single master list of primitive types, but there are some standard ones that seem to be universally taken. \\
+
+\noindent\textbf{A List of Primitive Types}
+\begin{enumerate}
+    \item $\ty 0$ - the empty type
+    \item $\ty 1$ - the unit type; the type with one term
+    \item $\ty{2}$ - the Boolean type; the type containing two terms, true and false
+    \item $\ty N$ - the Natural Numbers; defined inductively to contain zero and all of its successors
+    \item Basic Variables/Constants - arbitrary atomic symbols introduced to study a specific system (e.g. $\ty A, \ty B, \ty C$); these are just placehold types, analogous to calling a set $X$.
+\end{enumerate}
+
+\noindent\textbf{A List of Standard Type Constructors}
+\begin{enumerate}
+    \item $\ty{List}(\ty A)$ - the type of all finite lists of terms with type $\ty A$. 
+    \item $\ty{Maybe}(\ty A)$ - the type containing terms that might be in $\ty A$ (allows us to pick terms without committing them to the type $\ty A$ - for example, if you make a function that looks up a phone number, it'll return elements of $\ty{Maybe}(\ty Z)$ depending on whether the number exists)
+    \item $\ty A \times \ty B$ - the product type; consists of ordered pairs; corresponds to $\ty A \wedge \ty B$
+    \item $\ty A + \ty B$ - the disjoint union type; corresponds to $\ty A \vee \ty B$
+    \item $\ty A \to \ty B$ - the function type; has as terms rules for taking in terms of type $\ty A$ and returning terms of type $\ty B$; corresponds to $\ty A \implies \ty B$
+\end{enumerate}
+
+There are more complicated type constructors that exist, but this should be enough to get a sense for how type theory behaves. 
+
+\begin{example}
+The type $\R$ is constructed from $\Z$ as the collection of Cauchy sequences passed through the obvious quotient type. This makes computing things with real numbers difficult in Lean. For example, the function taking in a real number and adding $1$ breaks when applied to $\sqrt{2}$, since it's really a Cauchy sequence. 
+\end{example}
+
+We claimed that in Lean, \enquote{everything} is a type, so let's see how that's reflected in the syntax of Lean. Consider the following:
+\begin{center}
+    def g : $\R$ → $\R$ := fun x =$>$ x+1
+\end{center}
+This defines the aforementioned function that fails to be evaluated on $\sqrt{2}$ (try this for yourself on Lean by typing \enquote{$\#$eval g $\sqrt 2$} after defining the function). The command def in Lean introduces a term (g), and the \enquote{:} is the notation for assigning a type (the function type $\R \to \R$). Having declared the term and the type it lives in, the \enquote{:=} indicates that we are now actually assigning a value to the term $g$, which in our case is the function (fun) taking $x$ to $x + 1$. 
+\begin{center}
+    \textbf{In Lean, a colon can almost always be interpreted as declaring a type.}
+\end{center}
+There are a few exceptions that apparently exist, but those can likely be told apart from context. And even despite those exceptions, it is still worth thinking of all lone colons as indicating a type. 
+
+One particularly potent example of this that illustrates the "everything is types" perspective is the following, provided we have already established the definition of $g$ as above:
+\begin{center}
+    theorem groot2 : g $\sqrt{2}$ = $\sqrt{2}$ + 1 := by rfl
+\end{center}
+The theorem command requires that we give the theorem a name (groot2), and the colon is then indicating that the type of groot2 is the statement \enquote{$\sqrt{2}$ = $\sqrt{2}$ + 1.} As a type, a statement/proposition has as elements proofs of the statement, and the \enquote{:=} is indicating that we are about to find an element of this statement as a type. What \enquote{by}
+does is switch to tactic mode (which I don't understand yet), and then \enquote{rfl} is used to extract a term in the statement type. In short,
+\begin{center}
+    \textbf{Theorems are types, and a proof amounts to finding a term within that type. A statement is false if it is empty as a type.}
+\end{center}
+The underlying concept that makes this premise work is the \textbf{Curry-Howard Correspondence}, which informally tells us that that we can transfer between type theory and logic.
+
+\begin{addendum}[From ChatGPT + Claude]
+For those interested in the categorical formulation of this correspondence, we define the two syntactic categories below. The type-theoretic side will be developed further in the next section, while the details of propositional natural deduction will be omitted.
+
+\begin{definition}
+The \textbf{syntactic category of the simply typed $\lambda$-calculus} with products and a unit type, denoted by $\mathcal{T}$, is defined as follows:
+\begin{itemize}
+    \item Objects are types.
+    \item A morphism $A \to B$ is an equivalence class of terms $x:A \vdash t:B$, where $x$ is the only possible free variable and terms are identified up to $\beta\eta$-equality.
+    \item The identity morphism on $A$ is represented by $x:A \vdash x:A$.
+    \item Composition is given by substitution. If $f:A\to B$ is represented by $t(x)$ and $g:B\to C$ is represented by $u(y)$, then $g\circ f:A\to C$ is represented by $u(t(x))$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+The \textbf{syntactic category of intuitionistic propositional logic}, denoted by $\mathcal{L}$, for the fragment generated by $\wedge$, $\to$, and $\top$, is defined as follows:
+\begin{itemize}
+    \item Objects are propositions.
+    \item A morphism $P \to Q$ is an equivalence class of natural-deduction derivations of $P \vdash Q$, where derivations are identified under an appropriate proof-equivalence relation.
+    \item The identity morphism on $P$ is represented by the assumption rule $P \vdash P$.
+    \item Composition is given by cut: a derivation of $P \vdash Q$ can be composed with a derivation of $Q \vdash R$ by substituting the former derivation for the assumption $Q$ in the latter.
+\end{itemize}
+\end{definition}
+
+Both $\mathcal{T}$ and $\mathcal{L}$ are cartesian closed. In $\mathcal{T}$ the
+terminal object is the unit type, products are product types, and exponentials
+are function types; the required universal properties hold precisely because
+terms are identified up to $\beta\eta$-equality. In $\mathcal{L}$ the
+corresponding structures are $\top$, $\wedge$ and $\Rightarrow$, with proofs
+identified up to the equivalence generated by the proof-reduction and
+proof-expansion rules, the proof-theoretic counterpart of $\beta\eta$.
+
+The Curry--Howard correspondence is the translation $\mathcal{T}\to\mathcal{L}$
+defined by induction on syntax: $A\times B\mapsto A\wedge B$,
+$A\to B\mapsto A\Rightarrow B$, $1\mapsto\top$, and base types to atomic
+propositions; terms are sent to the proofs they encode. This is a bijection on
+objects and a functor preserving the cartesian closed structure, and in fact an
+isomorphism of categories. Equivalently, both categories are the free cartesian
+closed category on the same generators (Lambek--Scott), which is why the
+statement is often called the Curry--Howard--Lambek correspondence.
+Substitution corresponds to cut, and $\beta$-reduction to proof normalisation.
+\end{addendum}
+
+\section{A Foray into Type Theory}
+
+After looking into TPIL, I think grounding ourselves in type theory a bit more firmly is a good move. Our reference for this section will be \textit{Type Theory and Formal Proof} by Herman Geuvers and Rob Nederpelt: \url{https://anggtwu.net/tmp/nederpelt_geuvers__type_theory_and_formal_proof_an_introduction.pdf}. 
+
+\subsection{Untyped Lambda Calculus}
+
+The premise of this section is to define an abstract system encoding the behavior of functions. We begin with two construction principles:
+\begin{definition}
+    From expressions $M$ and $N$ we can construct a new expression $MN$. We call this \textbf{application of $M$ to $N$}. 
+\end{definition}
+\begin{definition}
+    From an expression $M$ and variable $x$, we can construct a new expression: $\lambda x.M$. We call this \textbf{abstraction of $x$ over $M$}.
+\end{definition}
+Intuitively, abstraction is essentially the process of taking $x$ to $x^2 + 1$, say, and application is akin to composition. These are the two rules for constructing/composing functions, but we would also like a method of evaluating functions. This is called \textbf{$\beta$-reduction}. These rules serve as the basis of the so-called \textbf{lambda calculus}.
+
+\subsubsection{Lambda Terms: Construction of Expressions}
+
+We begin with a collection of expressions, called $\lambda$-terms. The set of all such terms, denoted $\Lambda$, begins with a presupposed infinite list of \textbf{variables} $V = \{x,y,z,\dots\}$.
+
+\begin{definition}[The set of all $\Lambda$ terms] The collection of $\lambda$-terms $\Lambda$ and variables $V$ satisfies the following axioms:
+    \begin{enumerate}
+        \item (Variable) If $u \in V$, then $u \in \Lambda$.
+        \item (Application) If $M,N \in \Lambda$, then $(MN) \in \Lambda$.
+        \item (Abstraction) If $u \in V, M \in \Lambda$, then $(\lambda u. M) \in \Lambda$. 
+    \end{enumerate}
+Defining $\Lambda$ instead as an abstract syntax, we may truncate this to 
+\[\Lambda = V|(\Lambda\Lambda)|(\lambda V.\Lambda).\]
+\end{definition}
+
+We assume application is left associative, meaning $LMN = (LM)N$. With terms, we have subterms
+
+\begin{definition}[Multiset of Subterms; $\ty{Sub}$]
+The operation of extracting subterms satisfies the following:
+    \begin{enumerate}
+        \item (Basis) $\ty{Sub}(x) = \{x\}$ for each $x \in V$ 
+        \item (Application) $\ty{Sub}((MN)) = \ty{Sub}(M) \cup \ty{Sub}(N) \cup \{(MN)\}$ 
+        \item (Abstraction) $\ty{Sub}((\lambda x. M)) = \ty{Sub}(M) \cup \{(\lambda x.M)\}$.
+    \end{enumerate}
+    We say $L$ is a \textbf{subterm} of $M$ if $L \in \ty{Sub}(M)$. 
+\end{definition}
+
+This is essentially an axiomatization of \enquote{pieces} in a function. Intuitively, $x^3$ is akin to a subterm of $5x^3 + 7$. 
+
+\begin{definition}[FV, the set of free variables of a $\lambda$-term]
+    The operation of extracting the free variables of a $\lambda$-term satisfies
+\begin{enumerate}
+    \item (Variable) $FV(x) = \{x\}$.
+    \item (Application) $FV(MN) = FV(M) \cup FV(N)$.
+    \item (Abstraction) $FV(\lambda x.M) = FV(M) \setminus \{x\}$. 
+\end{enumerate}
+    A non-free variable is called a \textbf{binding variable}. Abstraction over $x$ is said to \textbf{bind} the free occurrences of $x$ in $M$.
+\end{definition}
+
+As suggested in the name \enquote{free variable,} this collects the variables that aren't assigned a value within a term. For an example $FV(\lambda x. (xy)) = \{y\}$ reveals that while an $x$ appears in this $\lambda$-term, we have also abstracted $x$ over $(xy)$, leaving only $y$ free. 
+
+\begin{definition}(Closed term; $\Lambda^0$)
+    The $\lambda$-term $M$ is \textbf{closed} if $FV(M) = \emptyset$. A closed $\lambda$-term is also called a \textbf{combinator}. The set of all closed $\lambda$-terms is denoted $\Lambda^0$. 
+\end{definition}
+
+\subsubsection{Alpha Conversion and Beta Reduction: Modes of Simplification}
+
+We have now established the formalism behind constructing expressions (i.e., our functions), but we also want to be able to simplify our expressions to relate functions that should intuitively be equivalent. The first obvious relation we would like to establish is equivalence of functions under renaming of free variables. 
+
+\begin{definition}[Renaming; $M^{x \to y}$; $=_\alpha$]
+    Let $M^{x \to y}$ denote the result of replacing every free occurrence of $x$ in $M$ by $y$. The relation \textbf{renaming}, expressed by $=_\alpha$, is defined as $\lambda x. M =_\alpha \lambda y. M^{x \to y}$, provided $y \notin FV(M)$ and $y$ is not a binding variable in $M$. 
+\end{definition}
+
+The two conditions are intuitive ones, preventing accidental additional binding when abstracting $y$ over either $M$ or $M^{x \to y}$. 
+
+\begin{definition}[$\alpha$-conversion/equivalence] The following axioms define \textbf{$\alpha$-equivalence}
+    \begin{enumerate}
+        \item (Renaming) $\lambda x. M =_\alpha \lambda y. M^{x \to y}$ as in the previous definition. 
+        \item (Compatibility) If $M =_\alpha N$, then $ML =_\alpha NL$ and $LM =_\alpha LN$ and, for arbitrary $z$, $\lambda z. M =_\alpha \lambda z.N$
+        \item (Reflexivity) $M =_\alpha M$ 
+        \item (Symmetry) If $M =_\alpha N$, then $N =_\alpha M$. 
+        \item (Transitivity) If both $L =_\alpha M$ and $M =_\alpha N$, then $L =_\alpha N$. 
+    \end{enumerate}
+\end{definition}
+
+The first two axioms establish the desired behavior of $\alpha$-conversion, and the last three axioms turn $=_\alpha$ into an equivalence relation. We now have the ability to rename variables. The next thing we want is a way to substitute and simplify expressions. 
+
+\begin{definition}[Substitution] The following axioms determine \textbf{substitution}. The notation for substitution below should be intuitive. 
+\begin{enumerate}
+    \item $x[x := N] \equiv N$
+    \item $y[x:= N] \equiv y$ if $x \not\equiv y$
+    \item $(PQ)[x := N] \equiv (P[x := N])(Q[x:= N])$
+    \item $(\lambda y. P)[x:= N] \equiv \lambda z.(P^{y\to z}[x:=N])$ if $\lambda z. P^{y \to z}$ is an $\alpha$-variant of $\lambda y. P$ such that $z \notin FV(N)$. 
+\end{enumerate}
+\end{definition}
+
+The first three conditions are straightforward. The conditions in the last axiom are there to prevent inconsistent binding potentially caused by free instances of $z$ in $N$. Using substitution, we define $\beta$-reduction.
+
+\begin{definition}[One-step $\beta$-reduction] \textbf{One-step $\beta$-reduction} satisfies the following:
+\begin{enumerate}
+    \item (Basis) $(\lambda x. M)N \to_\beta M[x:=N]$
+    \item (Compatibility) If $M \to_\beta N$, then $ML \to_\beta NL, LM \to_\beta LN,$ and $\lambda x.M \to_\beta \lambda x.N$. 
+\end{enumerate}
+In a given term, a subterm that is able to be $\beta$-reduced is called a \textbf{redex} (short for reducible expression).
+\end{definition}
+
+This formalizes the idea of plugging a value into a function. For example, using the axioms of $\beta$-reduction and substitution, we can find that
+\[(\lambda x. xy)(3) \to_\beta xy[x:=3] \equiv x[x:=3]y[x:=3] \equiv 3y.\] 
+Note that here, $xy$ is application of $x$ to $y$, and $3$ is also just a variable in $V$. At present, one-step $\beta$-reduction allows us to simplify a single redex in a given term, but we want to consider multiple simplifications as once. By repeatedly applying one-step reductions, we obtain the more general $\beta$-reduction. 
+
+\begin{definition}[$\beta$-reduction] 
+We denote general $\beta$-reduction by $\surj_\beta$. We declare $M \surj_\beta N$ if there is an $n \geq 0$ and terms $M_0,\dots M_n$ such that $M_0 \equiv M, M_n \equiv N$, and for all $0 \leq i < n$, $M_i \to_\beta M_{i + 1}$. 
+\end{definition}
+
+It is not hard to check that $\surj_\beta$ is reflexive and transitive. 
+
+\begin{definition}[$\beta$-conversion/equality]
+    We say $M=_\beta N$ (read \enquote{$M$ and $N$ are $\beta$-convertible/equal}) if there is $n \geq 0$ and terms $M_0$ to $M_n$ such that $M_0 \equiv M, M_n \equiv N$, and for all $0 \leq i < n$, either $M_i \to_\beta M_{i + 1}$ or $M_{i + 1} \to_\beta M_i$.
+\end{definition}
+
+This is a natural way to turn $\beta$-reduction into an equivalence relation.
+
+\begin{addendum}
+    I'm sort of remembering $\beta$-equality as something akin to localization in a category. Namely, we can heuristically think of $\Lambda$ as forming the objects in a category with $\beta$-reductions as morphisms. Then, what we are doing is essentially formally inverting all $\beta$-reductions so that they're bidirectional. 
+\end{addendum}
+
+\subsection{Bringing Types into Lambda Calculus}
+
+We begin our integration of types into lambda calculus by focusing solely on simple types, which are a more restrictive array types than the ones in Lean. In terms of the type theory we briefly introduced in the first section, we only permit variable types as primitives, and the only type constructor we have is the function type. 
+
+\subsubsection{Simple Types and Typed Terms}
+
+\begin{definition}[Simple types]
+    Let $\bb V$ be an infinite set of primitive types. The set of simple types $\bb T$ is defined by
+    \begin{enumerate}
+        \item (Type variable) If $\alpha \in \bb V$, then $\alpha \in \bb T$ 
+        \item (Arrow type) If $\sigma, \tau \in \bb T$, then $(\sigma \to \tau) \in \bb T$. 
+    \end{enumerate}
+\end{definition}
+
+\begin{remark}
+    Notationally, we assume right associativity of arrow types, meaning $\sigma \to \tau \to \eta$ is $\sigma \to (\tau \to \eta)$. This contrasts the assumed left associativity of application. 
+\end{remark}
+
+\begin{addendum}
+    The notation $\bb V$ for primitives comes from the book's naming of these as \enquote{type variables,} but as the book subsequently drops this terminology in favor of restricting the term \enquote{variable} for the first case (e.g. $x,y,z$), we take the liberty of avoiding adopting that language in the first place.
+\end{addendum}
+
+\begin{definition}[Statements]
+    We denote the expression \enquote{$M$ has type $\sigma$} by $M:\sigma$, and we call these \textbf{(typing) statements}.
+\end{definition}
+
+Having introduced this notation, we assume that we have infinitely many \textit{variables} at our disposal for any type $\sigma$. If $x$ has type $\sigma$, we denote this by $x : \sigma$. We henceforth assume that $x$ has a \textit{unique} type, so that if $x : \sigma$ and $x : \tau$, then $\sigma \equiv \tau$. 
+
+Now that we have brought type theory to our variables, we need to consider how types interface with abstractions and applications. 
+\begin{enumerate}
+    \item (Application) If $M : \sigma \to \tau$ and $N : \sigma$, then $MN : \tau$. 
+    \item (Abstraction) If $x : \sigma$ and $M : \tau$, then $\lambda x. M : \sigma \to \tau$. 
+\end{enumerate}
+The intuitive intent of application is clear: we are applying a function to a certain object. Abstraction, however, is a bit less evident at first glance. When we were dealing with abstraction in the $\lambda$-calculus setting, we were sort of thinking of $\lambda x. M$ as fixing a free variable within the expression $M \in \Lambda$. Speaking in terms of types, this might lead the reader to think, \enquote{shouldn't $M$ have a function type $\sigma \to \tau$, after which $\lambda x. M$ would fix the free variable $x : \sigma$, yielding an output of type $\tau$?} 
+
+To eliminate this suspicion, we must remember that when imagining $M : \tau$ as an expression containing $x$ as a free variable, we have not yet established anything about $x$. All we know is that $M$ is an expression that expresses something in the type $\tau$ in terms of some mysterious variable of unspecified type. Therefore, by fixing the type of $x$ to be $\sigma$ within $M$ through the abstraction $\lambda x. M$, our vague expression $M$ becomes a way of expressing something of type $\tau$ in terms of $x : \sigma$. In other words, $\lambda x. M$ is naturally seen as a rule taking $x : \sigma$ to $\tau$.
+
+\begin{remark}
+    In Lean, the keyword \enquote{fun} is the $\lambda$ in abstraction. For example, writing \enquote{fun x =$>$ x + 1} corresponds to $\lambda x. (x + 1)$, where $x : \N$ and $(x + 1) : \N$. 
+\end{remark}
+
+\begin{remark}
+    By our typing rules, there are some restrictions placed on application in the type-theoretic $\lambda$-calculus setting compared to the untyped $\lambda$-calculus discussed prior. 
+\end{remark}
+
+\begin{example}
+    \begin{enumerate}
+        \item When $x : \sigma$, the identity $\lambda x.x$ has type $\sigma \to \sigma$. 
+        \item The application $y x$ only has a type if $y$ has a function type and $x$ has the type of $y$'s domain. 
+        \item As a consequence of the previous example, $x x$ cannot have a type. This motivates the subsequent definition.
+    \end{enumerate}
+\end{example}
+
+\begin{definition}
+    We say a term $M$ is \textbf{typable} if there is a type such that $M : \sigma$. 
+\end{definition}
+
+\begin{remark}
+    Assume $f : \rho \to (\sigma \to \tau)$, $x : \rho$, $y : \sigma$. Then, $fx : \sigma \to \tau$, so $(fx)y : \tau$. Using the left associativity of application and the right associativity of arrow types, we can then write $f : \rho \to \sigma \to \tau$ and $fxy : \tau$ with no parentheses to obtain our desired types. This serves as justification for our assumed associativity rules: they are designed to make things consistent with our intuitive sense of evaluating and composing functions. 
+\end{remark}
+
+\subsubsection{Pre-Typed Terms and Derivation Rules}
+
+\begin{definition}[Pre-typed terms]
+The set of \textbf{pre-typed $\lambda$-terms} $\Lambda_\T$ is defined as an abstract syntax by
+\[\Lambda_\T = V|(\Lambda_\T\Lambda_\T)|(\Lambda V:\T.\Lambda_\T).\]
+\end{definition}
+
+Note that this collection does contain terms that are not typable. 
+
+\begin{definition}[Statement, declaration, context, judgment]\,
+\begin{enumerate}
+    \item A \textbf{statement} is of the form $M : \sigma$, where $M \in \Lambda_\T, \sigma \in \T$. In such a statement, we call $M$ the \textbf{subject} and $\sigma$ the \textbf{type}.
+    \item A \textbf{declaration} is a statement with a variable as a subject
+    \item A \textbf{context} is a list of declarations with different subjects
+    \item A \textbf{judgment} has form $\Gamma \vdash M : \sigma$, with $\Gamma$ a context and $M : \sigma$ a statement.
+\end{enumerate}
+\end{definition}
+
+We have already seen statements and declarations. One example should illuminate the other two definitions.
+
+\begin{example}
+Consider the judgment
+    \[x : \alpha \to \alpha, y : (\alpha \to \alpha) \to \beta \vdash (\lambda z : \beta . \lambda u : \gamma. z)(y x) : \gamma \to \beta.\]
+This expresses the fact that given the types above for $x$ and $y$, the type of the right-hand expression must be $\gamma \to \beta$. As always, associativity is implicitly defined in the way that aligns with our sense of functions: $\lambda z : \beta . \lambda u : \gamma. z = (\lambda z : \beta . (\lambda u : \gamma. z))$. 
+\end{example}
+
+The declarations in $\Gamma$ that make up the context can be thought to bind the variables in the statement $M$, yielding a natural sense of \textbf{free} and \textbf{bound} variables in the typed setting. 
+
+Now, we are working with typed $\lambda$-calculus, but as we noted before, our $\Lambda_\T$ still consists of many untypable terms. We therefore define a system of derivations to determine if a given term is typable. To this end, we introduce a notation for deductions:
+\[\frac{\text{Premise 1    Premise 2}}{\text{Conclusion}}.\]
+Using this notation, we introduce the following axioms for derivations of types:
+
+\begin{definition}[Derivation Rules]\,
+\begin{enumerate}
+    \item (var) $\Gamma \vdash x : \sigma$ if $x : \sigma \in \Gamma$ 
+    \item (appl) \[\frac{\Gamma \vdash M : \sigma \to \tau\,\,\,\,\Gamma \vdash N : \sigma}{\Gamma \vdash MN : \tau}\]
+    \item (abst) \[\frac{\Gamma,\,x : \sigma \vdash M : \tau}{\Gamma \vdash \lambda x : \sigma. M : \sigma \to \tau}\]
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Legality]
+A pre-typed term $M$ is \textbf{legal} if there exist context $\Gamma$ and type $\rho$ such that $\Gamma \vdash M : \rho$. 
+\end{definition}
+
+This gives us a \textbf{derivation system} for our typed $\lambda$-calculus, and restricting to legal terms ensures well-typedness of the terms we are working with. Before moving on, we briefly think through the implications of our derivation system. The rule (var) is our starting point; it has no premises necessary, and it expresses the fact that any declaration in a context follows from the context (i.e. axioms are true). 
+
+Then, (appl) addresses composition issues. It says that if we can deduce from $\Gamma$ that $M$ has type $\sigma \to \tau$ and that $N$ has type $\sigma$, we can then deduce from $\Gamma$ that $MN$ has type $\tau$.
+
+As usual, (abst) is the most technical of our axioms. It asserts that if we take the context $\Gamma$ and extend it by one more declaration $x : \sigma$, then if we are able to deduce that $M : \tau$, it must be that from our original context $\Gamma$, we can deduce that $\lambda x : \sigma . M$ has type $\sigma \to \tau$. This is fairly reasonable, except one might ask: why do we remove $x : \sigma$ from the context in the conclusion? This is because in the conclusion, $x$ is already bound, so there is no need to assume that $x : \sigma$ anymore. On the other hand, in the premise, $x$ could appear in $M$ as a free variable, so to make our desired deduction off of $M : \tau$, it is necessary that $x$ is bound to type $\sigma$. 
+
+\begin{example}[Example 2.4.6 in the book, Page 41] 
+In this example, imagine that there are fraction lines underneath each line with a dash. 
+\begin{enumerate}[label=(\roman*)]
+  \item $y : \alpha \to \beta,\ z : \alpha \vdash y : \alpha \to \beta$
+  \item $y : \alpha \to \beta,\ z : \alpha \vdash z : \alpha$ ——
+  \item $y : \alpha \to \beta,\ z : \alpha \vdash yz : \beta$ ——
+  \item $y : \alpha \to \beta \vdash \lambda z{:}\alpha.\, yz : \alpha \to \beta$ ——
+  \item $\emptyset \vdash \lambda y{:}\alpha \to \beta.\, \lambda z{:}\alpha.\, yz : (\alpha \to \beta) \to \alpha \to \beta$
+\end{enumerate}
+This derivation has been constructed as follows:
+\begin{itemize}
+  \item First, a double use of the (var)-rule gives us (i) and (ii),
+  \item then (iii) is obtained from (i) and (ii) by the (appl)-rule,
+  \item and (iv) results from (iii) by the (abst)-rule;
+  \item finally, we get (v) from (iv), again by the (abst)-rule.
+\end{itemize}
+At the end of this deduction, we conclude the most general type-theoretic information possible, namely what can be deduced from the empty context. Mechanically, this reveals the potency of (abst), as it allows us to peel away declarations in a given context one at a time towards making increasingly general deductions. 
+\end{example}
+
+\begin{remark}
+    Not only do derivations construct judgments, but they also allow us to justify judgments off of other judgments. Thus, we can start with axioms (context) and, using a string of judgments according to the derivation rules, we can deduce statements that follow according to these rules. These judgment tables, while obviously not reversible, can give guidance towards achieving certain goals. 
+\end{remark}
+
+In the context of this type theoretic derivation system, there are three main kinds of problems to be addressed:
+\begin{enumerate}
+    \item Well-typedness - $? \vdash x : \, ?$ - Is a term legal?
+    \item Type Checking - $\Gamma \vdash^{?} x : \sigma$ - Is this term of a given type?
+    \item Term finding - $\Gamma \vdash \,? : \sigma$ - Given a context, can we find a term of a given type?
+\end{enumerate}
+Of these three, term finding is generally the most difficult, and there is no algorithmic method of determining if a term of a given type exists. Unfortunately but sensibly, proving propositions is an instance of term finding, as we have already alluded to.
+
+\begin{addendum}[Claude-Assisted: $\alpha$-conversion and $\beta$-reduction]
+In this type-theoretic setting, $\alpha$-conversion and $\beta$-reduction transfer over essentially unchanged. The only syntactic difference is that binders carry type annotations, so $\alpha$-conversion renames the bound
+variable while keeping its annotation:
+\[\lambda x{:}\sigma.\,M \equiv_\alpha \lambda y{:}\sigma.\,M[x:=y].\]
+What is new is a layer of typing concerns: one must check that $\beta$-reduction preserves types, i.e. that $\Gamma \vdash M : \tau$ and $M \to_\beta M'$ imply $\Gamma \vdash M' : \tau$ (subject reduction), which relies on the substitution lemma:
+
+\begin{lemma}[Substitution]
+If $\Gamma, x{:}\sigma \vdash M : \tau$ and $\Gamma \vdash N : \sigma$, then $\Gamma \vdash M[x:=N] : \tau$.
+\end{lemma}
+
+This lemma, while intuitively evident, requires a surprising amount of steps to prove formally from our deduction rules (it isn't crazy or anything, but it does take more than I expected, at the very least). 
+\end{addendum}
+
+\subsection{Pi-Types and Polymorphism}
+
+So far, when constructing terms, we've had terms depending on other terms. For example, abstraction exhibits this kind of behavior: the term $\lambda x:\sigma . M$ depends on the term $x$. We call this kind of abstraction \textbf{first order} abstraction, but it is also possible to have terms that depend on types rather than other terms. These are \textbf{second order} operations, yielding \textbf{second order typed lambda calculus}, or $\lambda 2$ for short. 
+
+Notationally, this appears as follows:
+\[\lambda \alpha : * . \lambda x : \alpha . x\]
+This the \textbf{polymorphic identity function}, and the $*$ denotes the type of all types (in our previous terms, $*$ has type Type 1). To get one of our standard identities, we have to do a second order abstraction and $\beta$-reduction:
+\[(\lambda \alpha : * . \lambda x : \alpha . x) nat \to_\beta (\lambda x : \alpha.x)[\alpha := nat] \equiv  \lambda x : nat. x\]
+We have not yet gone over substitution in detail, so the justification of the $\equiv$ step is not fully spelled out here. The important property is that (assuming there are no binding issues) substitution is defined to pass through all subterms of an expression, including the type annotations on binders. In particular,
+$(\lambda x{:}\alpha.\,x)[\alpha := \textit{nat}] \equiv \lambda x{:}\textit{nat}.\,x$,
+since the annotation $\alpha$ is itself a subterm and is replaced by $\textit{nat}$.
+
+We now want to establish the types of these kinds of polymorphic functions. A natural guess is
+\[(\lambda \alpha : * . \lambda x : \alpha . x) : * \to (\alpha \to \alpha).\]
+However, this causes a subtle issue. We would like to be able to $\alpha$-convert to identify $(\lambda \alpha : * . \lambda x : \alpha . x)$ with, say $(\lambda \beta : * . \lambda x : \beta . x)$. But then, typing would say that
+\[(\lambda \alpha : * . \lambda x : \alpha . x) : * \to (\alpha \to \alpha),\]
+\[(\lambda \beta : * . \lambda x : \beta . x) : * \to (\beta \to \beta).\]
+Our rules of $\alpha$-conversion match up the expressions just fine, but on the type side of things, these two types are different because $\alpha$ and $\beta$ are not currently identified. The confusion arises because on the left, we are treating $\alpha$ as a binding variable, whereas on the right, $\alpha$ is free. This leads us to define the \textbf{$\Pi$-binder}:
+\[\Pi \alpha : * . \alpha \to \alpha.\]
+This denotes the type of functions taking an \textit{arbitrary} type $\alpha$ to a function of type $\alpha \to \alpha$. Intuitively, given that this is a binder, it should be thought of along similar lines to $\lambda$. 
+
+If it is still unclear why this type binder is at all necessary, recall that in a function type, the output—in this case $\alpha \to \alpha$—is \textit{fixed}. Thus, if we were to try to apply $(\lambda \alpha : * . \lambda x : \alpha . x)\gamma$, we would end with an output of type $\alpha \to \alpha$, while we would really like the type to be $\gamma \to \gamma$. 
+
+Having established the $\Pi$-binder, there is another layer that we need to add to our deduction system (second order application, abstraction, typed terms, derivation rules, etc.). This formalism has a similar flavor to the first order setting. We will not cover it in detail, but we present everything here in succinct form:
+
+\begin{addendum}[Second Order Formalism, straight from the book with Claude LaTeX]
+
+\begin{definition}[Second order pre-typed $\lambda$-terms, $\lambda2$-terms, $\Lambda_{\mathbb{T}2}$]
+The set of second order pre-typed $\lambda$-terms, or $\lambda2$-terms, is defined by:
+\[
+  \Lambda_{\mathbb{T}2} = V \mid (\Lambda_{\mathbb{T}2}\, \Lambda_{\mathbb{T}2})
+  \mid (\Lambda_{\mathbb{T}2}\, \mathbb{T}_2)
+  \mid (\lambda V : \mathbb{T}_2 .\, \Lambda_{\mathbb{T}2})
+  \mid (\lambda \mathbb{V} : * .\, \Lambda_{\mathbb{T}2}).
+\]
+Note that we now have two classes of variables at our disposal: object variables $V$ (such as $x, y, \ldots$) and type variables $\mathbb{V}$ (such as $\alpha, \beta, \ldots$). As a consequence, we have \emph{first order abstraction} $(\lambda V : \mathbb{T}_2 .\, \Lambda_{\mathbb{T}2})$ from object variables, and \emph{second order abstraction} $(\lambda \mathbb{V} : * .\, \Lambda_{\mathbb{T}2})$ from type variables. Correspondingly, we have \emph{first order application} $(\Lambda_{\mathbb{T}2}\, \Lambda_{\mathbb{T}2})$ and \emph{second order application} $(\Lambda_{\mathbb{T}2}\, \mathbb{T}_2)$.
+\end{definition}
+
+\begin{definition}[Statement, declaration]\,
+\begin{enumerate}
+  \item A \emph{statement} is either of the form $M : \sigma$, where
+        $M \in \Lambda_{\mathbb{T}2}$ and $\sigma \in \mathbb{T}_2$, or of the
+        form $\sigma : *$, where $\sigma \in \mathbb{T}_2$.
+  \item A \emph{declaration} is a statement with a term variable or a type
+        variable as subject.
+\end{enumerate}
+\end{definition}
+
+In $\lambda{\to}$ (first order deduction), a context was just a list of term declarations. In $\lambda2$, however, we are a bit more strict. Since the type constants of $\lambda{\to}$ have become type variables in $\lambda2$, we treat these type variables on a par with term variables, in the sense that all variables must be declared before they can be used. This guarantees that we `know' the types of all variables before we use them. That is to say, a declaration such as $x : \alpha \to \alpha$ must be preceded by the declaration of the type variable $\alpha$ (having type $*$). Furthermore, the declaration $x : \alpha \to \beta$ presupposes the declarations of both $\alpha$ and $\beta$. This is the motivation for the following recursive definition of $\lambda2$-context, which we combine with a new definition of the domain of a context. In this definition, part~(3), we speak about free type variables.
+
+\begin{definition}[$\lambda2$-context; domain; $\mathrm{dom}$]\,
+\begin{enumerate}
+  \item $\emptyset$ is a $\lambda2$-context; $\mathrm{dom}(\emptyset) = (\ )$,
+        the empty list.
+  \item If $\Gamma$ is a $\lambda2$-context, $\alpha \in \mathbb{V}$ and
+        $\alpha \notin \mathrm{dom}(\Gamma)$, then $\Gamma, \alpha : *$ is a
+        $\lambda2$-context; $\mathrm{dom}(\Gamma, \alpha : *) =
+        (\mathrm{dom}(\Gamma), \alpha)$, i.e.\ $\mathrm{dom}(\Gamma)$
+        concatenated with $\alpha$.
+  \item If $\Gamma$ is a $\lambda2$-context, if $\rho \in \mathbb{T}_2$ such
+        that $\alpha \in \mathrm{dom}(\Gamma)$ for all free type variables
+        $\alpha$ occurring in $\rho$, and if $x \notin \mathrm{dom}(\Gamma)$,
+        then $\Gamma, x : \rho$ is a $\lambda2$-context;
+        $\mathrm{dom}(\Gamma, x : \rho) = (\mathrm{dom}(\Gamma), x)$.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[$\lambda 2$ Derivation Rules] \,
+    \begin{align*}
+&\textbf{(var)} && \frac{}{\Gamma \vdash x : \sigma}
+   \quad \text{if } \Gamma \text{ is a } \lambda2\text{-context and } x : \sigma \in \Gamma \\[1.5ex]
+&\textbf{(appl)} && \frac{\Gamma \vdash M : \sigma \to \tau \qquad \Gamma \vdash N : \sigma}
+                         {\Gamma \vdash MN : \tau} \\[1.5ex]
+&\textbf{(abst)} && \frac{\Gamma, x : \sigma \vdash M : \tau}
+                         {\Gamma \vdash \lambda x : \sigma .\, M : \sigma \to \tau} \\[1.5ex]
+&\textbf{(form)} && \frac{}{\Gamma \vdash B : *}
+   \quad \text{if } \Gamma \text{ is a } \lambda2\text{-context, } B \in \mathbb{T}_2
+   \text{ and all free type variables in } B \text{ are declared in } \Gamma \\[1.5ex]
+&\textbf{(appl}_2\textbf{)} && \frac{\Gamma \vdash M : (\Pi \alpha : * .\, A) \qquad \Gamma \vdash B : *}
+                         {\Gamma \vdash MB : A[\alpha := B]} \\[1.5ex]
+&\textbf{(abst}_2\textbf{)} && \frac{\Gamma, \alpha : * \vdash M : A}
+                         {\Gamma \vdash \lambda \alpha : * .\, M : \Pi \alpha : * .\, A}
+\end{align*}
+\end{definition}
+
+
+\begin{definition}[Legal $\lambda2$-terms]
+A term $M$ in $\Lambda_{\mathbb{T}2}$ is called \emph{legal} if there exists a
+$\lambda2$-context $\Gamma$ and a type $\rho$ in $\mathbb{T}_2$ such that
+$\Gamma \vdash M : \rho$.
+\end{definition}
+\end{addendum}
+
+\subsection{Dependent Types and Propositions}
+
+Having established all of this formalism, we now get to the heart of the matter: how are propositions types, and how do we prove them?
+
+So far, we have terms dependent on terms (first order) and terms dependent on types (second order). There is also an extension involving types dependent on types, which we omitted. However, we are currently interested in the last possible arrangement: \textbf{types dependent on terms}. This extension (strictly more general $\lambda 2$) takes the form
+\[\lambda x: A . M,\]
+where $M : *$ is a type and $x$ a term variable. The abstraction above then depends on the term $x$ and outputs a type (it is a type-valued function on terms).
+
+The idea is to then view the type $M$ as a proposition. To clarify this premise, we give an example:
+\[\lambda n : nat . P_n.\]
+Here, we take $P_n$ to be the proposition \enquote{$n$ is a prime number,} so the term $(\lambda n : nat . P_n)$ has type $nat \to *$. This is what we call a \textbf{predicate,} and in colloquial terms, it reads \enquote{$\_$ is a prime number,} and we can plug some $n \in \N$ into this blank statement to get a type that is either inhabited (contains a term) or empty (does not). 
+
+\begin{definition}[Derivation Rules for $\lambda P$; Straight from the book]
+\begin{mathpar}
+\inferrule*[right=(sort)]
+  { }
+  { \emptyset \vdash * : \square }
+
+\inferrule*[right=(var)]
+  { \Gamma \vdash A : s \\ x \notin \Gamma }
+  { \Gamma, x : A \vdash x : A }
+
+\inferrule*[right=(weak)]
+  { \Gamma \vdash A : B \\ \Gamma \vdash C : s \\ x \notin \Gamma }
+  { \Gamma, x : C \vdash A : B }
+
+\inferrule*[right=(form)]
+  { \Gamma \vdash A : * \\ \Gamma, x : A \vdash B : s }
+  { \Gamma \vdash \Pi x : A .\, B : s }
+
+\inferrule*[right=(appl)]
+  { \Gamma \vdash M : \Pi x : A .\, B \\ \Gamma \vdash N : A }
+  { \Gamma \vdash M N : B[x := N] }
+
+\inferrule*[right=(abst)]
+  { \Gamma, x : A \vdash M : B \\ \Gamma \vdash \Pi x : A .\, B : s }
+  { \Gamma \vdash \lambda x : A .\, M : \Pi x : A .\, B }
+
+\inferrule*[right=(conv)]
+  { \Gamma \vdash A : B \\ \Gamma \vdash B' : s \\ B =_\beta B' }
+  { \Gamma \vdash A : B' }
+\end{mathpar}
+\end{definition}
+
+
+(Claude was used to aid with these explanations, which presumably occurred throughout sections of the book that I skipped over): The $\square$ is the top of the hierarchy; it has no type, and there is no derivable judgment $\Gamma \vdash \square : s$. On the other hand, $*$ consists of ordinary types (type variables, data types like $nat$, function types, polymorphic types, and propositions). The variable $s$ is a \textbf{sort variable}, and is either $*$ or $\square$. The symbol $\Pi$ is now the \textbf{dependent function type}, the type of functions that take an input $x$ of type $A$ and return something of type $B$, where $B$ may mention $x$. This means it handles polymorphism ($A = *$, as in $\Pi\alpha{:}*.\,\alpha\to\alpha$), but also genuinely dependent types on terms ($A = \textit{nat}$, as in $\Pi n{:}\textit{nat}.\,P_n$), and it reduces to the ordinary arrow $A \to B$ when $x \notin FV(B)$. 
+
+The symbol $\lambda$ keeps its basic meaning: $\lambda x{:}A.\,M$ is the \textbf{function} that sends an input $a$ of type $A$ to $M[x:=a]$, and $\beta$-reduction computes it by substitution, $(\lambda x{:}A.\,M)\,N \to_\beta M[x:=N]$. What changes is its type and what it is allowed to build. Its type is now a $\Pi$-type: $\lambda x{:}A.\,M : \Pi x{:}A.\,B$, where $M : B$ and $B$ may mention $x$. The ordinary arrow $A \to B$ is the case where it does not. In this sense $\lambda$ is the \textbf{introduction} form for $\Pi$ (how to bring about a term of that type), and application is the \textbf{elimination} form (how to use them by feeding them arguments).
+
+We now interpret the derivation rules:
+\begin{enumerate}
+    \item (sort) is self-explanatory
+    \item (var) is also fairly trivial. It says that if we can deduce $A : s$ from $\Gamma$, then if we add $x : A$ to $\Gamma$, we can deduce $x : A$.
+    \item (weak) at first glance seems useless, but what weakening allows us to do is use declarations before the rightmost one, which (var) alone cannot do. 
+    \item (form) This is the analogue of abstraction but for $\Pi$ types
+    \item (appl) and (abst) are as before, but in terms of $\Pi$ types
+    \item (conv) allows us to run $\beta$-reduction and make replacements based on it. 
+\end{enumerate}
+
+\begin{addendum}[An Edited Version of Claude's Response to "Is $\lambda P$ the setting of Lean?"]
+    The system $\lambda P$ is already subtle, yet it is far simpler than Lean's logic, which adds a universe hierarchy, inductive types, and several definitional extensions (and, beyond the kernel, an elaborator and tactic framework). Nonetheless, the core ideas carry over directly: $\Pi$ and $\lambda$ as the central binders, propositions as types, computation ($\beta$-conversion) inside types, and the introduction/elimination structure of the rules. Because the system is small enough to be understood completely, it is a more illuminating setting for learning these ideas than confronting all of Lean's machinery at once.
+\end{addendum}
+
+\begin{remark}[Claude used for Added Precision]
+Contexts cannot be constructed arbitrarily. Starting from $\emptyset$, the rules (var) and (weak) are the only ones that extend a context, each by a single declaration $x : A$, and only when that declaration is \emph{legal}, meaning that $A$ is well formed in the current context ($\Gamma \vdash A : s$) and $x$ is fresh ($x \notin \mathrm{dom}(\Gamma)$).
+
+To see how this gets started, note that (sort) gives $\emptyset \vdash * : \square$, so $*$ is well formed with $s = \square$. Applying (var) with $A = *$ then adjoins a type variable, giving $\alpha : * \vdash \alpha : *$. Now $\alpha$ is itself well formed, so we may declare term variables of type $\alpha$, as in
+$\alpha : *,\ x : \alpha$, and continue in this way.
+
+From here, the premise of propositions as types becomes concrete. When we view a type $B$ as a proposition, we view terms $b : B$ as proofs of $B$. This explains why the type $A \to B$ corresponds to ``$A$ implies $B$.'' Given a proof $a : A$, a term $M : A \to B$ yields a proof $M\,a : B$, which is modus ponens, i.e.\ application. Conversely, to \emph{prove} $A \to B$, we assume a proof $a : A$ of the hypothesis, produce a proof $M : B$ (which may use $a$), and conclude $\lambda a{:}A.\,M : A \to B$.
+\end{remark}
+
+\subsection{A Nod to the Culmination: The Calculus of Constructions}
+
+In our exploration of type theory, we skipped over one of the systems, namely $(\lambda \underline{\omega})$ covered in Chapter 4 of the book. However, we have done enough to appreciate a final punchline: there is a way of combining $\lambda\to, \lambda 2, \lambda\underline{\omega},$ and $\lambda P$ into one system called $\lambda C$ or the \textbf{calculus of constructions}. This is the foundation core on which Lean's logic is built (Lean also adds a universe hierarchy, inductive types, etc.). We won't spell out the system here at all, but is worth noting that the only difference between $\lambda P$ and $\lambda C$ is an adjustment in (form).
+
+\begin{addendum}[Claude]
+    Passing from $\lambda P$ to $\lambda C$ amounts to relaxing (form) so that the domain $A$ may have any sort, $A : s_1$, rather than only $A : *$. This adds both polymorphism ($\lambda 2$) and type operators ($\lambda\underline{\omega}$).
+\end{addendum}
+
+
+\end{document}
